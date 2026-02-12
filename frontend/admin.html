@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Studio Kamm - Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Space+Grotesk:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header class="hero hero--compact">
+        <div class="hero__content">
+          <p class="hero__eyebrow">Studio Kamm</p>
+          <h1>Daily bookings board</h1>
+          <p class="hero__lead">Quick overview of who is coming in next.</p>
+          <div class="hero__actions">
+            <a class="button button--ghost" href="index.html">Booking view</a>
+          </div>
+        </div>
+      </header>
+
+      <section class="admin">
+        <div class="admin__header">
+          <label class="field">
+            <span>Date</span>
+            <input id="admin-date" type="date" />
+          </label>
+          <button class="button" id="refresh">Refresh</button>
+        </div>
+        <div class="admin__list" id="booking-list"></div>
+      </section>
+    </div>
+
+    <script src="admin.js" type="module"></script>
+  </body>
+</html>

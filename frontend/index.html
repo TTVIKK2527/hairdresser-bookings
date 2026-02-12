@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Studio Kamm - Booking</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Space+Grotesk:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header class="hero">
+        <div class="hero__content">
+          <p class="hero__eyebrow">Studio Kamm</p>
+          <h1>Book your next cut in minutes.</h1>
+          <p class="hero__lead">
+            Select a service, pick your stylist, and grab a time slot that fits.
+          </p>
+          <div class="hero__actions">
+            <a class="button button--ghost" href="admin.html">Admin view</a>
+          </div>
+        </div>
+        <div class="hero__panel">
+          <div class="booking-card">
+            <h2>Reserve a time</h2>
+            <form id="booking-form">
+              <label class="field">
+                <span>Service</span>
+                <select id="service" required></select>
+              </label>
+              <label class="field">
+                <span>Stylist</span>
+                <select id="staff" required></select>
+              </label>
+              <label class="field">
+                <span>Date</span>
+                <input id="date" type="date" required />
+              </label>
+              <label class="field">
+                <span>Time</span>
+                <select id="time" required>
+                  <option value="">Select a slot</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Name</span>
+                <input id="name" type="text" placeholder="Full name" required />
+              </label>
+              <label class="field">
+                <span>Phone</span>
+                <input id="phone" type="tel" placeholder="Phone number" required />
+              </label>
+              <label class="field">
+                <span>Email</span>
+                <input id="email" type="email" placeholder="Optional" />
+              </label>
+              <label class="field">
+                <span>Notes</span>
+                <textarea id="notes" rows="2" placeholder="Any requests?"></textarea>
+              </label>
+              <button class="button" type="submit">Book now</button>
+              <p class="form-message" id="form-message"></p>
+            </form>
+          </div>
+        </div>
+      </header>
+
+      <section class="info">
+        <div>
+          <h3>Services curated for real hair days.</h3>
+          <p>
+            From precision cuts to bold color work, we build each appointment around
+            your routine and goals.
+          </p>
+        </div>
+        <div class="info__panel" id="service-list"></div>
+      </section>
+    </div>
+
+    <script src="app.js" type="module"></script>
+  </body>
+</html>
