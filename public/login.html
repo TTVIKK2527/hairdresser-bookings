@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Studio Kamm - Admin Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Space+Grotesk:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header class="hero hero--compact">
+        <div class="hero__content">
+          <p class="hero__eyebrow">Studio Kamm</p>
+          <h1>Admin login</h1>
+          <p class="hero__lead">Enter your credentials to view the bookings board.</p>
+        </div>
+        <div class="hero__panel">
+          <div class="booking-card">
+            <h2>Sign in</h2>
+            <form id="login-form">
+              <label class="field">
+                <span>Username</span>
+                <input id="username" type="text" autocomplete="username" required />
+              </label>
+              <label class="field">
+                <span>Password</span>
+                <input id="password" type="password" autocomplete="current-password" required />
+              </label>
+              <button class="button" type="submit">Log in</button>
+              <p class="form-message" id="login-message"></p>
+            </form>
+          </div>
+        </div>
+      </header>
+    </div>
+
+    <script src="login.js" type="module"></script>
+  </body>
+</html>

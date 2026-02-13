@@ -4,6 +4,8 @@ require_once __DIR__ . '/../src/db.php';
 require_once __DIR__ . '/../src/booking/availability.php';
 require_once __DIR__ . '/../src/booking/validators.php';
 
+session_start();
+
 function json_response($data, int $status = 200): void
 {
     http_response_code($status);
@@ -27,10 +29,64 @@ function read_json_body(): array
     return $decoded;
 }
 
+function admin_credentials(): array
+{
+    $username = getenv('ADMIN_USERNAME') ?: 'admin';
+    $password = getenv('ADMIN_PASSWORD');
+    if ($password === false || $password === '') {
+        $password = 'changeme';
+    }
+
+    return [
+        'username' => $username,
+        'password' => $password
+    ];
+}
+
+function require_admin(): void
+{
+    if (empty($_SESSION['admin_authenticated'])) {
+        json_response(['error' => 'Unauthorized.'], 401);
+    }
+}
+
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($path === '/api/health') {
+    json_response(['ok' => true]);
+}
+
+if ($path === '/api/admin/session' && $method === 'GET') {
+    json_response([
+        'authenticated' => !empty($_SESSION['admin_authenticated']),
+        'username' => $_SESSION['admin_username'] ?? null
+    ]);
+}
+
+if ($path === '/api/admin/login' && $method === 'POST') {
+    $payload = read_json_body();
+    $username = trim((string)($payload['username'] ?? ''));
+    $password = (string)($payload['password'] ?? '');
+    $credentials = admin_credentials();
+
+    if ($username === $credentials['username'] && hash_equals($credentials['password'], $password)) {
+        session_regenerate_id(true);
+        $_SESSION['admin_authenticated'] = true;
+        $_SESSION['admin_username'] = $username;
+        json_response(['ok' => true, 'username' => $username]);
+    }
+
+    json_response(['error' => 'Invalid credentials.'], 401);
+}
+
+if ($path === '/api/admin/logout' && $method === 'POST') {
+    $_SESSION = [];
+    if (ini_get('session.use_cookies')) {
+        $params = session_get_cookie_params();
+        setcookie(session_name(), '', time() - 42000, $params['path'], $params['domain'], $params['secure'], $params['httponly']);
+    }
+    session_destroy();
     json_response(['ok' => true]);
 }
 
@@ -84,6 +140,7 @@ if ($path === '/api/availability' && $method === 'GET') {
 }
 
 if ($path === '/api/bookings' && $method === 'GET') {
+    require_admin();
     $date = $_GET['date'] ?? null;
     $params = [];
     $sql = "
