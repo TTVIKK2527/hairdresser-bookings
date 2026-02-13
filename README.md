@@ -27,6 +27,24 @@
    - Booking UI: http://localhost:8080/index.html
    - Admin login: http://localhost:8080/login.html
 
+## Live deployment (pull-only)
+
+Production host is configured so deploys are done with a single `git pull`.
+
+- SSH: `ssh -p 1022 vhost132437ssh@studiokamm.ee`
+- Git checkout path: `~/hairdresser`
+- Web root symlink: `~/htdocs -> ~/hairdresser/public`
+- Data symlink (persistent DB): `~/hairdresser/data -> ~/data`
+
+Deploy command:
+
+- `ssh -p 1022 vhost132437ssh@studiokamm.ee 'cd ~/hairdresser && git pull --ff-only origin main'`
+
+Optional quick smoke checks:
+
+- `curl -s https://studiokamm.ee/api.php/health`
+- `curl -s 'https://studiokamm.ee/api.php/availability?staffId=1&serviceId=3&date=2026-02-16'`
+
 ## API
 
 - `GET /api/services`
@@ -63,7 +81,7 @@ Client-server flow in this app:
 - Unauthorized admin access risk → mitigated with session-based login and `require_admin()` protection on admin bookings API.
 - Stored/reflected XSS risk → mitigated by escaping dynamic text in frontend rendering before `innerHTML` output.
 - Invalid input / logic abuse risk → mitigated with server-side input validation (`validators.php`) and business-rule checks.
-- Double-booking race condition risk → mitigated with DB transaction (`BEGIN IMMEDIATE`), overlap check at write-time, and unique index `idx_bookings_staff_date_start`.
+- Double-booking race condition risk → mitigated with DB transaction (`beginTransaction()`), overlap check at write-time, and unique index `idx_bookings_staff_date_start`.
 
 ## Code standard
 
