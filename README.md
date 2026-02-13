@@ -1,18 +1,12 @@
-# Hairdresser Booking MVP
+# Hairdresser Booking MVP (PHP)
 
 ## Setup
 
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
-2. Start the server:
-   ```bash
-   npm run dev
-   ```
+1. Ensure PHP 8+ with SQLite enabled.
+2. Point your web server docroot to `public/`.
 3. Open the app:
-   - Booking UI: http://localhost:3000
-   - Admin view: http://localhost:3000/admin.html
+   - Booking UI: /index.html
+   - Admin view: /admin.html
 
 ## API
 
@@ -24,5 +18,5 @@
 
 ## Notes
 
-- Database file is stored at `backend/db/hairdresser.db`.
+- Database file is stored at `data/hairdresser.sqlite`.
 - Seed data is loaded automatically on first run.
