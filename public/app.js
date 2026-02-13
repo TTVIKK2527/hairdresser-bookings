@@ -5,6 +5,16 @@ const timeSelect = document.getElementById('time');
 const form = document.getElementById('booking-form');
 const message = document.getElementById('form-message');
 const serviceList = document.getElementById('service-list');
+const API_BASE = '/api.php';
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
 
 const today = new Date();
 const todayValue = today.toISOString().slice(0, 10);
@@ -20,11 +30,11 @@ async function fetchJson(url) {
 }
 
 async function loadServices() {
-  const services = await fetchJson('/api/services');
+  const services = await fetchJson(`${API_BASE}/services`);
   serviceSelect.innerHTML = services
     .map(
       (service) =>
-        `<option value="${service.id}">${service.name} · ${service.duration_min} min · $${(
+        `<option value="${service.id}">${escapeHtml(service.name)} · ${service.duration_min} min · $${(
           service.price_cents / 100
         ).toFixed(2)}</option>`
     )
@@ -34,7 +44,7 @@ async function loadServices() {
     .map(
       (service) => `
         <div class="card">
-          <h4>${service.name}</h4>
+          <h4>${escapeHtml(service.name)}</h4>
           <p>${service.duration_min} min · $${(service.price_cents / 100).toFixed(2)}</p>
         </div>
       `
@@ -43,9 +53,9 @@ async function loadServices() {
 }
 
 async function loadStaff() {
-  const staff = await fetchJson('/api/staff');
+  const staff = await fetchJson(`${API_BASE}/staff`);
   staffSelect.innerHTML = staff
-    .map((person) => `<option value="${person.id}">${person.name}</option>`)
+    .map((person) => `<option value="${person.id}">${escapeHtml(person.name)}</option>`)
     .join('');
 }
 
@@ -61,7 +71,7 @@ async function loadSlots() {
     date: dateInput.value
   });
 
-  const data = await fetchJson(`/api/availability?${params}`);
+  const data = await fetchJson(`${API_BASE}/availability?${params}`);
   if (data.slots.length === 0) {
     timeSelect.innerHTML = '<option value="">No slots available</option>';
     return;
@@ -88,7 +98,7 @@ form.addEventListener('submit', async (event) => {
       notes: document.getElementById('notes').value
     };
 
-    const res = await fetch('/api/bookings', {
+    const res = await fetch(`${API_BASE}/bookings`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -116,6 +126,11 @@ form.addEventListener('submit', async (event) => {
   input.addEventListener('change', loadSlots);
 });
 
-await loadServices();
-await loadStaff();
-await loadSlots();
+try {
+  await loadServices();
+  await loadStaff();
+  await loadSlots();
+} catch (error) {
+  message.textContent = 'Could not load booking data. Please refresh the page.';
+  message.style.color = '#b84e2d';
+}

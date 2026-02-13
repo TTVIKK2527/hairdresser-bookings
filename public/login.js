@@ -1,8 +1,9 @@
 const form = document.getElementById('login-form');
 const message = document.getElementById('login-message');
+const API_BASE = '/api.php';
 
 async function checkSession() {
-  const res = await fetch('/api/admin/session');
+  const res = await fetch(`${API_BASE}/admin/session`);
   if (!res.ok) {
     return;
   }
@@ -23,7 +24,7 @@ form.addEventListener('submit', async (event) => {
       password: document.getElementById('password').value
     };
 
-    const res = await fetch('/api/admin/login', {
+    const res = await fetch(`${API_BASE}/admin/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)

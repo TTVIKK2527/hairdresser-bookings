@@ -39,3 +39,4 @@ CREATE TABLE IF NOT EXISTS bookings (
 );
 
 CREATE INDEX IF NOT EXISTS idx_bookings_staff_date ON bookings (staff_id, date);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_bookings_staff_date_start ON bookings (staff_id, date, start_time);

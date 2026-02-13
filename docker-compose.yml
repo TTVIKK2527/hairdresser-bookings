@@ -7,4 +7,7 @@ services:
       ADMIN_USERNAME: admin
       ADMIN_PASSWORD: changeme
     volumes:
-      - ./data:/var/www/html/data
+      - sqlite_data:/var/www/html/data
+
+volumes:
+  sqlite_data:

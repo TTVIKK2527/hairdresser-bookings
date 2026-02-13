@@ -4,6 +4,11 @@ require_once __DIR__ . '/../src/db.php';
 require_once __DIR__ . '/../src/booking/availability.php';
 require_once __DIR__ . '/../src/booking/validators.php';
 
+session_set_cookie_params([
+    'httponly' => true,
+    'samesite' => 'Lax',
+    'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+]);
 session_start();
 
 function json_response($data, int $status = 200): void
@@ -50,7 +55,38 @@ function require_admin(): void
     }
 }
 
+function has_overlapping_booking(PDO $db, int $staffId, string $date, string $startTime, string $endTime): bool
+{
+    $stmt = $db->prepare(
+        'SELECT COUNT(*) AS count
+         FROM bookings
+         WHERE staff_id = ?
+           AND date = ?
+           AND start_time < ?
+           AND end_time > ?'
+    );
+    $stmt->execute([$staffId, $date, $endTime, $startTime]);
+    $result = $stmt->fetch();
+
+    return (int)$result['count'] > 0;
+}
+
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+
+if (str_starts_with($path, '/api.php')) {
+    $suffix = substr($path, strlen('/api.php'));
+    $path = '/api' . ($suffix === false ? '' : $suffix);
+} else {
+    $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
+    if ($scriptName !== '' && str_starts_with($path, $scriptName)) {
+        $path = '/api' . substr($path, strlen($scriptName));
+    }
+}
+
+$path = rtrim($path, '/');
+if ($path === '') {
+    $path = '/';
+}
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($path === '/api/health') {
@@ -203,41 +239,64 @@ if ($path === '/api/bookings' && $method === 'POST') {
         json_response(['error' => 'Staff is not available on that date.'], 400);
     }
 
-    $bookingStmt = $db->prepare(
-        'SELECT start_time, end_time FROM bookings WHERE staff_id = ? AND date = ? ORDER BY start_time'
-    );
-    $bookingStmt->execute([$payload['staffId'], $payload['date']]);
-    $bookings = $bookingStmt->fetchAll();
-
-    $slots = generate_slots($availabilityWindows, (int)$service['duration_min'], $bookings);
-    if (!in_array($payload['startTime'], $slots, true)) {
-        json_response(['error' => 'Selected time is no longer available.'], 409);
-    }
-
     $startMinutes = time_to_minutes($payload['startTime']);
     $endMinutes = $startMinutes + (int)$service['duration_min'];
     $endTime = minutes_to_time($endMinutes);
     $createdAt = (new DateTime())->format(DateTime::ATOM);
 
-    $insertStmt = $db->prepare(
-        'INSERT INTO bookings (staff_id, service_id, customer_name, customer_phone, customer_email, date, start_time, end_time, notes, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-    );
-    $insertStmt->execute([
-        $payload['staffId'],
-        $payload['serviceId'],
-        trim($payload['customerName']),
-        trim($payload['customerPhone']),
-        isset($payload['customerEmail']) ? trim($payload['customerEmail']) : null,
-        $payload['date'],
-        $payload['startTime'],
-        $endTime,
-        isset($payload['notes']) ? trim($payload['notes']) : null,
-        $createdAt
-    ]);
+    try {
+        $db->beginTransaction();
+
+        $bookingStmt = $db->prepare(
+            'SELECT start_time, end_time FROM bookings WHERE staff_id = ? AND date = ? ORDER BY start_time'
+        );
+        $bookingStmt->execute([$payload['staffId'], $payload['date']]);
+        $bookings = $bookingStmt->fetchAll();
+
+        $slots = generate_slots($availabilityWindows, (int)$service['duration_min'], $bookings);
+        if (!in_array($payload['startTime'], $slots, true)) {
+            $db->rollBack();
+            json_response(['error' => 'Selected time is no longer available.'], 409);
+        }
+
+        if (has_overlapping_booking($db, (int)$payload['staffId'], $payload['date'], $payload['startTime'], $endTime)) {
+            $db->rollBack();
+            json_response(['error' => 'Selected time is no longer available.'], 409);
+        }
+
+        $insertStmt = $db->prepare(
+            'INSERT INTO bookings (staff_id, service_id, customer_name, customer_phone, customer_email, date, start_time, end_time, notes, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        );
+        $insertStmt->execute([
+            $payload['staffId'],
+            $payload['serviceId'],
+            trim($payload['customerName']),
+            trim($payload['customerPhone']),
+            isset($payload['customerEmail']) ? trim($payload['customerEmail']) : null,
+            $payload['date'],
+            $payload['startTime'],
+            $endTime,
+            isset($payload['notes']) ? trim($payload['notes']) : null,
+            $createdAt
+        ]);
+
+        $bookingId = (int)$db->lastInsertId();
+        $db->commit();
+    } catch (PDOException $exception) {
+        if ($db->inTransaction()) {
+            $db->rollBack();
+        }
+
+        if (str_contains($exception->getMessage(), 'UNIQUE constraint failed')) {
+            json_response(['error' => 'Selected time is no longer available.'], 409);
+        }
+
+        json_response(['error' => 'Booking failed. Please try again.'], 500);
+    }
 
     json_response([
-        'id' => (int)$db->lastInsertId(),
+        'id' => $bookingId,
         'staff' => $staff['name'],
         'service' => $service['name'],
         'date' => $payload['date'],
